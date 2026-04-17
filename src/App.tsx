@@ -207,6 +207,14 @@ function App() {
     downloadFile(dataUrl, "image.png");
   };
 
+  const handleSaveJPGClick = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+ 
+    const dataUrl = canvas.toDataURL("image/jpeg");
+    downloadFile(dataUrl, "image.jpg");
+  };
+
   const handleSaveGB7Click = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -248,6 +256,13 @@ function App() {
               onClick={handleSavePNGClick}
             >
               Save PNG
+            </Button>
+            <Button
+              color="inherit"
+              startIcon={<DownloadIcon />}
+              onClick={handleSaveJPGClick}
+            >
+              Save JPG
             </Button>
             <Button
               color="inherit"
