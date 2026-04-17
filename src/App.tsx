@@ -134,6 +134,7 @@ function App() {
     width: 0,
     height: 0,
     depth: 0,
+    hasMask: false,
   });
 
   const handleOpenClick = () => {
@@ -159,6 +160,10 @@ function App() {
       const imageData = decodeGB7(buffer);
 
       if (imageData) {
+        const view = new DataView(buffer);
+        const flags = view.getUint8(5);
+        const hasMask = (flags & 0x01) !== 0;
+
         canvas.width = imageData.width;
         canvas.height = imageData.height;
         ctx.putImageData(imageData, 0, 0);
@@ -166,7 +171,8 @@ function App() {
         setImgInfo({
           width: imageData.width,
           height: imageData.height,
-          depth: 7, // родная глубина цвета формата
+          depth: 7,
+          hasMask: hasMask,
         });
       }
     } else {
@@ -179,10 +185,14 @@ function App() {
         canvas.height = img.height;
         ctx.drawImage(img, 0, 0);
 
+        // проверка на JPG/JPEG
+        const isJpg = file.name.toLowerCase().match(/\.(jpg|jpeg)$/);
+
         setImgInfo({
           width: img.width,
           height: img.height,
-          depth: 32,
+          depth: isJpg ? 24 : 32,
+          hasMask: false,
         });
 
         URL.revokeObjectURL(url);
@@ -210,7 +220,7 @@ function App() {
   const handleSaveJPGClick = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
- 
+
     const dataUrl = canvas.toDataURL("image/jpeg");
     downloadFile(dataUrl, "image.jpg");
   };
@@ -300,7 +310,20 @@ function App() {
         >
           <canvas
             ref={canvasRef}
-            style={{ maxWidth: "100%", height: "auto", display: "block" }}
+            style={{
+              maxWidth: "100%",
+              height: "auto",
+              display: "block",
+              border: imgInfo.width > 0 ? "1px solid #888" : "none",
+              boxShadow:
+                imgInfo.width > 0 ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
+              backgroundImage:
+                imgInfo.width > 0
+                  ? "repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%)"
+                  : "none",
+              backgroundSize: "20px 20px",
+              backgroundPosition: "0 0, 10px 10px",
+            }}
           />
         </Paper>
       </Container>
@@ -321,7 +344,7 @@ function App() {
         <Container maxWidth="xl">
           <Typography variant="body2" color="text.secondary">
             Resolution: {imgInfo.width} × {imgInfo.height} px | Color Depth:{" "}
-            {imgInfo.depth} bit
+            {imgInfo.depth} bit {imgInfo.hasMask ? "+ 1 bit mask" : ""}
           </Typography>
         </Container>
       </Paper>
