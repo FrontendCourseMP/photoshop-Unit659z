@@ -53,7 +53,7 @@ const Footer = ({ imgInfo, pickedColor }: FooterProps) => {
           </Typography>
 
           {pickedColor && (
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Box
                 sx={{
                   width: 20,

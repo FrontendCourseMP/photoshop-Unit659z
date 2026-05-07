@@ -60,7 +60,7 @@ const LevelsDialog = ({
     }
   }
 
-  const updateTimerRef = useRef<number>();
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 1. Расчет исходной гистограммы 
   const baseHistogram = useMemo(() => {
@@ -200,15 +200,17 @@ const LevelsDialog = ({
       open={open}
       hideBackdrop
       disableEnforceFocus
-      PaperProps={{
-        elevation: 4,
-        sx: {
-          position: "fixed",
-          right: 260, 
-          top: 80,
-          m: 0,
-          width: 350,
-        },
+      slotProps={{
+        paper: {
+          elevation: 4,
+          sx: {
+            position: "fixed",
+            right: 260, 
+            top: 80,
+            m: 0,
+            width: 350,
+          },
+        }
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>Levels & Preview</DialogTitle>
@@ -365,3 +367,4 @@ const LevelsDialog = ({
 };
 
 export default LevelsDialog;
+;

@@ -14,7 +14,7 @@ import ColorizeIcon from "@mui/icons-material/Colorize";
 import TuneIcon from "@mui/icons-material/Tune";
 
 interface HeaderProps {
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   isEyedropperActive: boolean;
   onOpenClick: () => void;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
