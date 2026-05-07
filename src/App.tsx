@@ -260,6 +260,7 @@ function App() {
       <LevelsDialog
         open={isLevelsOpen}
         imageData={originalImageData}
+        isGb7={imgInfo.depth === 7}
         onClose={() => {
           setIsLevelsOpen(false);
           setPreviewImageData(null); 

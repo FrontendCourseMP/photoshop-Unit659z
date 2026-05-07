@@ -28,6 +28,7 @@ import {
 interface LevelsDialogProps {
   open: boolean;
   imageData: ImageData | null;
+  isGb7?: boolean;
   onClose: () => void;
   onApply: (newData: ImageData) => void;
   onPreviewUpdate: (previewData: ImageData | null) => void;
@@ -38,6 +39,7 @@ type ChannelType = keyof LevelsConfig;
 const LevelsDialog = ({
   open,
   imageData,
+  isGb7,
   onClose,
   onApply,
   onPreviewUpdate,
@@ -47,8 +49,16 @@ const LevelsDialog = ({
 
   const [config, setConfig] = useState<LevelsConfig>(defaultLevelsConfig());
   const [activeChannel, setActiveChannel] = useState<ChannelType>("master");
+  const [prevIsGb7, setPrevIsGb7] = useState(isGb7);
   const [isPreviewEnabled, setIsPreviewEnabled] = useState(true);
   const [isLogScale, setIsLogScale] = useState(false);
+
+  if (isGb7 !== prevIsGb7) {
+    setPrevIsGb7(isGb7);
+    if (isGb7 && (activeChannel === "r" || activeChannel === "g" || activeChannel === "b")) {
+      setActiveChannel("master");
+    }
+  }
 
   const updateTimerRef = useRef<number>();
 
@@ -233,10 +243,10 @@ const LevelsDialog = ({
                   setActiveChannel(e.target.value as ChannelType)
                 }
               >
-                <MenuItem value="master">RGB (Master)</MenuItem>
-                <MenuItem value="r">Red</MenuItem>
-                <MenuItem value="g">Green</MenuItem>
-                <MenuItem value="b">Blue</MenuItem>
+                <MenuItem value="master">{isGb7 ? "Master" : "RGB (Master)"}</MenuItem>
+                {!isGb7 && <MenuItem value="r">Red</MenuItem>}
+                {!isGb7 && <MenuItem value="g">Green</MenuItem>}
+                {!isGb7 && <MenuItem value="b">Blue</MenuItem>}
                 <MenuItem value="a">Alpha</MenuItem>
               </Select>
             </FormControl>
@@ -268,26 +278,45 @@ const LevelsDialog = ({
               {config[activeChannel].white}
             </Typography>
             <Slider
-              value={[config[activeChannel].black, config[activeChannel].white]}
-              onChange={(_, val) => {
-                const [b, w] = val as number[];
-                handleLevelsChange("black", b >= w ? w - 1 : b);
-                handleLevelsChange("white", w);
+              value={[
+                config[activeChannel].black,
+                Math.round(
+                  config[activeChannel].black +
+                    (config[activeChannel].white - config[activeChannel].black) *
+                      Math.pow(0.5, config[activeChannel].gamma),
+                ),
+                config[activeChannel].white,
+              ]}
+              onChange={(_, val, activeThumb) => {
+                const [b, g, w] = val as number[];
+                const currentBlack = config[activeChannel].black;
+                const currentWhite = config[activeChannel].white;
+
+                if (activeThumb === 0) {
+                  const newBlack = Math.min(b, currentWhite - 2);
+                  handleLevelsChange("black", newBlack);
+                } else if (activeThumb === 2) {
+                  const newWhite = Math.max(w, currentBlack + 2);
+                  handleLevelsChange("white", newWhite);
+                } else if (activeThumb === 1) {
+                  if (currentWhite - currentBlack > 0) {
+                    const minRel = Math.pow(0.5, 9.9);
+                    const maxRel = Math.pow(0.5, 0.1);
+                    const relativeMid = Math.min(
+                      maxRel,
+                      Math.max(minRel, (g - currentBlack) / (currentWhite - currentBlack)),
+                    );
+                    const newGamma = Math.log(relativeMid) / Math.log(0.5);
+                    handleLevelsChange(
+                      "gamma",
+                      Number(Math.min(9.9, Math.max(0.1, newGamma)).toFixed(2)),
+                    );
+                  }
+                }
               }}
               min={0}
               max={255}
               disableSwap
-              size="small"
-            />
-            <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
-              Gamma
-            </Typography>
-            <Slider
-              value={config[activeChannel].gamma}
-              onChange={(_, v) => handleLevelsChange("gamma", v as number)}
-              min={0.1}
-              max={9.9}
-              step={0.05}
               size="small"
             />
           </Box>
