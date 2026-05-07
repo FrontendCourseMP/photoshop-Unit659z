@@ -1,4 +1,11 @@
-import { Paper, Container, Typography, Box, Stack, Divider } from "@mui/material";
+import {
+  Paper,
+  Container,
+  Typography,
+  Box,
+  Stack,
+  Divider,
+} from "@mui/material";
 
 interface FooterProps {
   imgInfo: {
@@ -30,14 +37,19 @@ const Footer = ({ imgInfo, pickedColor }: FooterProps) => {
         right: 0,
         p: 1,
         bgcolor: "background.paper",
-        zIndex: 1201, // Above drawer
+        zIndex: 1201,
       }}
     >
       <Container maxWidth="xl">
-        <Stack direction="row" spacing={3} alignItems="center" divider={<Divider orientation="vertical" flexItem />}>
+        <Stack
+          direction="row"
+          spacing={3}
+          sx={{ alignItems: "center" }} 
+          divider={<Divider orientation="vertical" flexItem />}
+        >
           <Typography variant="body2" color="text.secondary">
-            Resolution: {imgInfo.width} × {imgInfo.height} px | Color Depth: {imgInfo.depth} bit{" "}
-            {imgInfo.hasMask ? "+ 1 bit mask" : ""}
+            Resolution: {imgInfo.width} × {imgInfo.height} px | Color Depth:{" "}
+            {imgInfo.depth} bit {imgInfo.hasMask ? "+ 1 bit mask" : ""}
           </Typography>
 
           {pickedColor && (
@@ -57,7 +69,8 @@ const Footer = ({ imgInfo, pickedColor }: FooterProps) => {
                 RGB: ({pickedColor.r}, {pickedColor.g}, {pickedColor.b})
               </Typography>
               <Typography variant="body2" color="text.primary">
-                Lab: ({pickedColor.lab[0]}, {pickedColor.lab[1]}, {pickedColor.lab[2]})
+                Lab: ({pickedColor.lab[0]}, {pickedColor.lab[1]},{" "}
+                {pickedColor.lab[2]})
               </Typography>
             </Stack>
           )}

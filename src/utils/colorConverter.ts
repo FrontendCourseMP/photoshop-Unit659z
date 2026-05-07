@@ -1,7 +1,11 @@
 /**
  * Преобразует RGB в CIELAB.
  */
-export const rgbToLab = (r: number, g: number, b: number): [number, number, number] => {
+export const rgbToLab = (
+  r: number,
+  g: number,
+  b: number,
+): [number, number, number] => {
   // Нормализация RGB в диапазон [0, 1]
   let rN = r / 255;
   let gN = g / 255;
@@ -22,11 +26,16 @@ export const rgbToLab = (r: number, g: number, b: number): [number, number, numb
   const yN = y / 100.0;
   const zN = z / 108.883;
 
-  const f = (t: number) => t > 0.008856 ? Math.pow(t, 1 / 3) : (7.787 * t) + (16 / 116);
+  const f = (t: number) =>
+    t > 0.008856 ? Math.pow(t, 1 / 3) : 7.787 * t + 16 / 116;
 
   const L = 116 * f(yN) - 16;
   const a = 500 * (f(xN) - f(yN));
   const bb = 200 * (f(yN) - f(zN));
 
-  return [Math.round(L * 100) / 100, Math.round(a * 100) / 100, Math.round(bb * 100) / 100];
+  return [
+    Math.round(L * 100) / 100,
+    Math.round(a * 100) / 100,
+    Math.round(bb * 100) / 100,
+  ];
 };

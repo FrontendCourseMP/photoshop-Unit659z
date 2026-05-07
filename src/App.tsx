@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, type ChangeEvent, type MouseEvent } from "react";
 import { Box, Drawer } from "@mui/material";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CanvasPreview from "./components/CanvasPreview";
 import ChannelsPanel from "./components/ChannelsPanel";
+import LevelsDialog from "./components/LevelsDialog";
 import { decodeGB7, encodeGB7 } from "./utils/gb7";
 import { rgbToLab } from "./utils/colorConverter";
 
@@ -11,8 +12,15 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [originalImageData, setOriginalImageData] = useState<ImageData | null>(null);
-  const [channels, setChannels] = useState({ r: true, g: true, b: true, a: true });
+  const [originalImageData, setOriginalImageData] = useState<ImageData | null>(
+    null,
+  );
+  const [channels, setChannels] = useState({
+    r: true,
+    g: true,
+    b: true,
+    a: true,
+  });
   const [isEyedropperActive, setIsEyedropperActive] = useState(false);
   const [pickedColor, setPickedColor] = useState<{
     x: number;
@@ -30,30 +38,36 @@ function App() {
     hasMask: false,
   });
 
-  // Re-render canvas when original data or channels change
+  const [isLevelsOpen, setIsLevelsOpen] = useState(false);
+  const [previewImageData, setPreviewImageData] = useState<ImageData | null>(
+    null,
+  );
+
   useEffect(() => {
-    if (!originalImageData || !canvasRef.current) return;
+    const activeData = previewImageData || originalImageData;
+    if (!activeData || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const { width, height, data } = originalImageData;
-    const displayData = new ImageData(new Uint8ClampedArray(data), width, height);
+    const { width, height, data } = activeData;
+    const displayData = new ImageData(
+      new Uint8ClampedArray(data),
+      width,
+      height,
+    );
 
     for (let i = 0; i < displayData.data.length; i += 4) {
       if (!channels.r) displayData.data[i] = 0;
       if (!channels.g) displayData.data[i + 1] = 0;
       if (!channels.b) displayData.data[i + 2] = 0;
-      if (!channels.a) displayData.data[i + 3] = 255; // If alpha is "off", we show fully opaque? 
-      // Actually, lab2 says: "If only the alpha channel is left, the user should see a transparency mask."
-      // This usually means if R, G, B are off, we show Alpha as Grayscale.
+      if (!channels.a) displayData.data[i + 3] = 255;
     }
 
-    // Special case: if only alpha is active, show it as grayscale
     if (!channels.r && !channels.g && !channels.b && channels.a) {
       for (let i = 0; i < displayData.data.length; i += 4) {
-        const alpha = originalImageData.data[i + 3];
+        const alpha = activeData.data[i + 3];
         displayData.data[i] = alpha;
         displayData.data[i + 1] = alpha;
         displayData.data[i + 2] = alpha;
@@ -64,7 +78,7 @@ function App() {
     canvas.width = width;
     canvas.height = height;
     ctx.putImageData(displayData, 0, 0);
-  }, [originalImageData, channels]);
+  }, [originalImageData, previewImageData, channels]);
 
   const handleOpenClick = () => {
     fileInputRef.current?.click();
@@ -156,20 +170,24 @@ function App() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (!isEyedropperActive || !originalImageData || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    
-    // Calculate scale factors if CSS resized the canvas
+
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
     const x = Math.floor((e.clientX - rect.left) * scaleX);
     const y = Math.floor((e.clientY - rect.top) * scaleY);
 
-    if (x >= 0 && x < originalImageData.width && y >= 0 && y < originalImageData.height) {
+    if (
+      x >= 0 &&
+      x < originalImageData.width &&
+      y >= 0 &&
+      y < originalImageData.height
+    ) {
       const index = (y * originalImageData.width + x) * 4;
       const r = originalImageData.data[index];
       const g = originalImageData.data[index + 1];
@@ -181,7 +199,10 @@ function App() {
   };
 
   const toggleChannel = (channel: "r" | "g" | "b" | "a") => {
-    if (imgInfo.depth === 7 && (channel === "r" || channel === "g" || channel === "b")) {
+    if (
+      imgInfo.depth === 7 &&
+      (channel === "r" || channel === "g" || channel === "b")
+    ) {
       setChannels((prev) => {
         const newState = !prev.r;
         return { ...prev, r: newState, g: newState, b: newState };
@@ -202,6 +223,7 @@ function App() {
         onSaveJPG={handleSaveJPGClick}
         onSaveGB7={handleSaveGB7Click}
         onToggleEyedropper={() => setIsEyedropperActive(!isEyedropperActive)}
+        onOpenLevels={() => setIsLevelsOpen(true)}
       />
 
       <Box sx={{ display: "flex", flexGrow: 1 }}>
@@ -213,14 +235,18 @@ function App() {
             isEyedropperActive={isEyedropperActive}
           />
         </Box>
-        
+
         <Drawer
           variant="permanent"
           anchor="right"
           sx={{
             width: 240,
             flexShrink: 0,
-            [`& .MuiDrawer-paper`]: { width: 240, boxSizing: "border-box", position: "relative" },
+            [`& .MuiDrawer-paper`]: {
+              width: 240,
+              boxSizing: "border-box",
+              position: "relative",
+            },
           }}
         >
           <ChannelsPanel
@@ -231,11 +257,21 @@ function App() {
           />
         </Drawer>
       </Box>
-
-      <Footer
-        imgInfo={imgInfo}
-        pickedColor={pickedColor}
+      <LevelsDialog
+        open={isLevelsOpen}
+        imageData={originalImageData}
+        onClose={() => {
+          setIsLevelsOpen(false);
+          setPreviewImageData(null); 
+        }}
+        onApply={(newData) => {
+          setOriginalImageData(newData); 
+          setPreviewImageData(null);
+          setIsLevelsOpen(false);
+        }}
+        onPreviewUpdate={setPreviewImageData}
       />
+      <Footer imgInfo={imgInfo} pickedColor={pickedColor} />
     </Box>
   );
 }

@@ -1,9 +1,9 @@
 import { Container, Paper } from "@mui/material";
-import { forwardRef } from "react";
+import { forwardRef, type MouseEvent } from "react";
 
 interface CanvasPreviewProps {
   width: number;
-  onCanvasClick: (e: React.MouseEvent<HTMLCanvasElement>) => void;
+  onCanvasClick: (e: MouseEvent<HTMLCanvasElement>) => void;
   isEyedropperActive: boolean;
 }
 
@@ -58,7 +58,7 @@ const CanvasPreview = forwardRef<HTMLCanvasElement, CanvasPreviewProps>(
         </Paper>
       </Container>
     );
-  }
+  },
 );
 
 CanvasPreview.displayName = "CanvasPreview";
