@@ -1,4 +1,4 @@
-https://app.netlify.com/projects/photoshop-unit/overview
+**https://photoshop-unit.netlify.app/**
 
 # React + TypeScript + Vite
 
